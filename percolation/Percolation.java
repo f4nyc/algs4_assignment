@@ -7,7 +7,7 @@ public class Percolation {
     private final WeightedQuickUnionUF grid_full;
     private final int size;
     private int open_number;
-    private int[][] open;
+    private boolean[][] open;                               //丧心病狂换成boolean终于满分
     private void validate(int row, int col){
         if(row < 1 || col < 1 || row > size || col > size)
             throw new java.lang.IllegalArgumentException();
@@ -20,17 +20,17 @@ public class Percolation {
         validate(n,n);
         grid = new WeightedQuickUnionUF(n*n+2);
         grid_full = new WeightedQuickUnionUF(n*n+1);
-        open = new int[n][n];
+        open = new boolean[n][n];
         open_number = 0;
         for(int i = 0;i<n;i++)
             for(int j = 0;j<n;j++)
-                open[i][j] = 0;
+                open[i][j] = false;
     }
     // create n-by-n grid, with all sites blocked
     public    void open(int row, int col){
         validate(row,col);
         if(isOpen(row,col))return;
-        open[row-1][col-1] = 1;
+        open[row-1][col-1] = true;
         open_number++;
         if(row == 1) {
             grid.union(rc_to_1D(row, col), size * size);
@@ -55,7 +55,7 @@ public class Percolation {
     // open site (row, col) if it is not open already
     public boolean isOpen(int row, int col){
         validate(row,col);
-        return open[row-1][col-1]==1;
+        return open[row-1][col-1];
     }  // is site (row, col) open?
     public boolean isFull(int row, int col){
         return isOpen(row,col) && grid_full.connected(size*size,rc_to_1D(row,col));
