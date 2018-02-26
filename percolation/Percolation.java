@@ -1,83 +1,73 @@
-/**
- * Created by fanyc on 17-5-22.
- */
+import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 import edu.princeton.cs.algs4.StdIn;
-import edu.princeton.cs.algs4.StdOut;
+
 public class Percolation {
-    private WeightedQuickUnionUF grid;
-    private WeightedQuickUnionUF gridnobottom;
-    private int size;
-    private int[] status;
-    private int openumber;
-
-    private int isvalid(int row, int col) {
-        if (row < 1 || row > size || col < 1 || col > size)
-            throw new IndexOutOfBoundsException("Grid size out of range");
-        int index = (row-1)*size+col-1;
-        return index;
+    private final WeightedQuickUnionUF grid;
+    private final WeightedQuickUnionUF grid_full;
+    private final int size;
+    private int open_number;
+    private int[][] open;
+    private void validate(int row, int col){
+        if(row < 1 || col < 1 || row > size || col > size)
+            throw new java.lang.IllegalArgumentException();
     }
-    public Percolation(int n) {
-        if (n < 1) throw new IllegalArgumentException("Grid size out of range");
+    private int rc_to_1D(int row, int col){
+        return (row-1)*size+col-1;
+    };
+    public Percolation(int n){
         size = n;
-        openumber = 0;
-        grid = new WeightedQuickUnionUF(n * n + 2);
-        gridnobottom = new WeightedQuickUnionUF(n * n + 1);
-        status = new int[n * n];
-        for (int i = 0; i < n * n; i++)
-            status[i] = 0;
+        validate(n,n);
+        grid = new WeightedQuickUnionUF(n*n+2);
+        grid_full = new WeightedQuickUnionUF(n*n+1);
+        open = new int[n][n];
+        open_number = 0;
+        for(int i = 0;i<n;i++)
+            for(int j = 0;j<n;j++)
+                open[i][j] = 0;
     }
-
+    // create n-by-n grid, with all sites blocked
     public    void open(int row, int col){
-        if(isOpen(row, col))
-            return;
-        int index=isvalid(row, col);
-        status[index] = 1;
-        openumber++;
-        int[] offsetx = {1,-1,0,0};
-        int[] offsety = {0,0,1,-1};
-        if(row==1) {
-            grid.union(index, size * size);
-            gridnobottom.union(index, size * size);
+        validate(row,col);
+        if(isOpen(row,col))return;
+        open[row-1][col-1] = 1;
+        open_number++;
+        if(row == 1) {
+            grid.union(rc_to_1D(row, col), size * size);
+            grid_full.union(rc_to_1D(row, col), size * size);
         }
-        if(row==size)
-            grid.union(index,size*size+1);
-        for(int i = 0;i < 4;i++) {
-            int offsetrow =row+offsetx[i];
-            int offsetcol = col+offsety[i];
-            if (offsetrow < 1 || offsetrow > size || offsetcol < 1 || offsetcol > size)
+        if(row == size)
+            grid.union(rc_to_1D(row,col),size*size+1);
+        int[] r_offset = {1,-1,0,0};
+        int[] c_offset = {0,0,1,-1};
+        for(int i = 0;i < 4; i++ ){
+            int r = row + r_offset[i];
+            int c = col + c_offset[i];
+            if(r < 1 || c < 1 || r > size || c > size)
                 continue;
-            int offsetindex = (offsetrow-1)*size+offsetcol-1;
-            if(isOpen(offsetrow,offsetcol)) {
-                grid.union(offsetindex, index);
-                gridnobottom.union(offsetindex, index);
+            if(isOpen(r,c)) {
+                grid.union(rc_to_1D(row, col), rc_to_1D(r, c));
+                grid_full.union(rc_to_1D(row, col), rc_to_1D(r, c));
             }
         }
-
     }
 
-    public boolean isOpen(int row, int col)
-    {
-        int index = isvalid(row,col);
-        return status[index]==1;
-    }
-
-    public boolean isFull(int row, int col)
-    {
-        int index = isvalid(row,col);
-        return isOpen(row,col) && gridnobottom.connected(index,size*size);
-    }
-
-    public int numberOfOpenSites() {
-        return openumber;
-    }
-
+    // open site (row, col) if it is not open already
+    public boolean isOpen(int row, int col){
+        validate(row,col);
+        return open[row-1][col-1]==1;
+    }  // is site (row, col) open?
+    public boolean isFull(int row, int col){
+        return isOpen(row,col) && grid_full.connected(size*size,rc_to_1D(row,col));
+    }  // is site (row, col) full?
+    public     int numberOfOpenSites(){
+        return open_number;
+    }       // number of open sites
     public boolean percolates(){
         return grid.connected(size*size,size*size+1);
     }              // does the system percolate?
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args){
         int n = StdIn.readInt();
         Percolation client = new Percolation(n);
         while (!StdIn.isEmpty())
@@ -89,5 +79,5 @@ public class Percolation {
             StdOut.println(client.isFull(row, col));
             StdOut.println(client.percolates());
         }
-    }
+    }   // test client (optional)
 }
